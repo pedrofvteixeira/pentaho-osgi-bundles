@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd"
+           default-timeout="20000">
+
+  <!-- Initialization of OpenSAML library-->
+  <bean id="openSamlBootstrap" class="org.opensaml.DefaultBootstrap" init-method="bootstrap" lazy-init="false"/>
+
+  <bean class="org.pentaho.platform.security.saml.PentahoSamlUserDetailsService" id="pentahoSamlUserDetailsService" />
+
+  <!-- SAML Authentication Provider responsible for validating received SAML messages -->
+  <bean id="samlAuthenticationProvider" class="org.springframework.security.saml.SAMLAuthenticationProvider">
+      <argument ref="webSSOprofileConsumer" />
+      <property name="userDetails" ref="pentahoSamlUserDetailsService" />
+  </bean>
+
+  <service id="samlAuthProvider" ref="samlAuthenticationProvider" interface="org.springframework.security.authentication.AuthenticationProvider">
+    <service-properties>
+      <entry key="providerName" value="saml" />
+    </service-properties>
+  </service>
+
+  <!-- Consumer of assertions obtained from IDPs -->
+  <bean id="webSSOprofileConsumer" class="org.springframework.security.saml.websso.WebSSOProfileConsumerImpl" depends-on="openSamlBootstrap">
+      <argument ref="metadata"/>
+      <argument ref="keyResolver"/>
+      <argument ref="privateKey"/>
+  </bean>
+
+  <!-- IDP Metadata configuration - paths to metadata of IDPs in circle of trust is here -->
+  <!-- Do no forget to call iniitalize method on providers -->
+  <bean id="metadata" class="org.springframework.security.saml.metadata.MetadataManager" depends-on="openSamlBootstrap">
+      <argument>
+          <list>
+              <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider" init-method="initialize">
+                  <argument>
+                      <value type="java.io.File">classpath:idp.xml</value>
+                  </argument>
+                  <property name="parserPool" ref="parserPool"/>
+              </bean>
+              <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider" init-method="initialize">
+                  <argument>
+                      <value type="java.io.File">classpath:sp.xml</value>
+                  </argument>
+                  <property name="parserPool" ref="parserPool"/>
+              </bean>
+          </list>
+      </argument>
+      <!-- OPTIONAL property: can tell the system which IDP should be used for authenticating user by default. -->
+      <property name="defaultIDP" value="http://localhost:8080/opensso"/>
+      <property name="hostedSPName" value="http://localhost:8090" />
+  </bean>
+
+  <!-- XML parser pool needed for OpenSAML parsing -->
+  <bean id="parserPool" class="org.opensaml.xml.parse.BasicParserPool"/>
+
+  <!-- Makes the parserPool available in the static holder -->
+  <bean id="parserPoolHolder" class="org.springframework.security.saml.parser.ParserPoolHolder" lazy-init="false" depends-on="parserPool">
+      <argument ref="parserPool"/>
+  </bean>
+
+  <!-- Set keys which should be available to the system in the map, one of these keys must be also specified in the webSSOProfile later -->
+  <bean id="keyResolver" class="org.opensaml.xml.security.credential.KeyStoreCredentialResolver">
+      <argument>
+          <bean factory-bean="keyStore" factory-method="getKeyStore"/>
+      </argument>
+      <argument>
+          <map>
+              <entry key="pentaho-cert" value="PENTAHO"/>
+          </map>
+      </argument>
+  </bean>
+
+  <!-- Alias of the key used for SAML signing and encryption/decryption -->
+  <bean name="privateKey" class="java.lang.String">
+      <argument value="pentaho-cert"/>
+  </bean>
+
+</blueprint>

@@ -89,6 +89,7 @@
         <module>pentaho-ss4-proxies</module>
         <module>pentaho-ss2-proxies</module>
         <module>pentaho-proxy-spring4</module>
+        <module>pentaho-saml-auth-provider</module>
       </modules>
     </profile>
     <profile>
@@ -112,6 +113,7 @@
         <module>pentaho-service-coordinator</module>
         <module>pentaho-capability-manager</module>
         <module>pentaho-cache-manager</module>
+        <module>pentaho-saml-auth-provider</module>
       </modules>
     </profile>
     <profile>
