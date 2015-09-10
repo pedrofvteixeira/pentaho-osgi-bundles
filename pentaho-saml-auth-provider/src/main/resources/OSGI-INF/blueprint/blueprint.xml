@@ -2,10 +2,11 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd"
-           default-timeout="20000">
+           default-timeout="20000"
+           default-activation="lazy">
 
   <!-- Initialization of OpenSAML library-->
-  <bean id="openSamlBootstrap" class="org.opensaml.DefaultBootstrap" init-method="bootstrap" lazy-init="false"/>
+  <bean id="openSamlBootstrap" class="org.pentaho.platform.security.saml.PentahoOpenSamlBootstrap" />
 
   <bean class="org.pentaho.platform.security.saml.PentahoSamlUserDetailsService" id="pentahoSamlUserDetailsService" />
 
@@ -56,14 +57,20 @@
   <bean id="parserPool" class="org.opensaml.xml.parse.BasicParserPool"/>
 
   <!-- Makes the parserPool available in the static holder -->
-  <bean id="parserPoolHolder" class="org.springframework.security.saml.parser.ParserPoolHolder" lazy-init="false" depends-on="parserPool">
+  <bean id="parserPoolHolder" class="org.springframework.security.saml.parser.ParserPoolHolder" depends-on="parserPool">
       <argument ref="parserPool"/>
+  </bean>
+
+  <!-- Key manager, set the JKS path and password to open the datastore -->
+  <bean id="keyStoreFactory" class="org.springframework.security.saml.key.JKSKeyManager">
+      <argument value="classpath:forsikring-keystore"/>
+      <argument value="TANDBERG"/>
   </bean>
 
   <!-- Set keys which should be available to the system in the map, one of these keys must be also specified in the webSSOProfile later -->
   <bean id="keyResolver" class="org.opensaml.xml.security.credential.KeyStoreCredentialResolver">
       <argument>
-          <bean factory-bean="keyStore" factory-method="getKeyStore"/>
+          <bean factory-ref="keyStoreFactory" factory-method="getKeyStore"/>
       </argument>
       <argument>
           <map>
@@ -73,7 +80,7 @@
   </bean>
 
   <!-- Alias of the key used for SAML signing and encryption/decryption -->
-  <bean name="privateKey" class="java.lang.String">
+  <bean id="privateKey" class="java.lang.String">
       <argument value="pentaho-cert"/>
   </bean>
 

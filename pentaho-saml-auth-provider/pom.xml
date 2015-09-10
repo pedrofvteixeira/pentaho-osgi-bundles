@@ -82,7 +82,6 @@
       <groupId>org.springframework.security.extensions</groupId>
       <artifactId>spring-security-saml2-core</artifactId>
       <version>1.0.1.RELEASE</version>
-      <scope>compile</scope>
     </dependency>
 
     <dependency>
@@ -91,12 +90,12 @@
       <version>1.6</version>
     </dependency>
 
-    <dependency>
+    <!-- <dependency>
       <groupId>org.springframework.security.extensions</groupId>
       <artifactId>spring-security-saml2-core</artifactId>
       <version>1.0.1.RELEASE</version>
       <scope>test</scope>
-    </dependency>
+    </dependency> -->
 
     <dependency>
       <groupId>org.mockito</groupId>
@@ -125,26 +124,6 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>
-              org.springframework.security.saml.*,
-              org.pentaho.platform.security.saml.*
-            </Export-Package>
-            <Import-Package>
-              org.springframework.beans.*,
-              org.springframework.core.*,
-              org.springframework.web.*,
-              org.springframework.security.*,
-              javax.net.*,
-              javax.security.*,
-              javax.servlet.*,
-              javax.xml.*,
-              org.apache.commons.httpclient.*,
-              org.apache.commons.logging,
-              org.apache.commons.ssl,
-              org.apache.velocity.*,
-              org.opensaml.*,
-              *
-            </Import-Package>
           </instructions>
         </configuration>
       </plugin>
