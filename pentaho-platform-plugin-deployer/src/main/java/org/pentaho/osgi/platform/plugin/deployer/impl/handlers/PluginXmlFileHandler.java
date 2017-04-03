@@ -34,6 +34,7 @@ public abstract class PluginXmlFileHandler extends XmlPluginFileHandler {
     super( xpath );
   }
   @Override public boolean handles( String fileName ) {
+    /*
     if ( fileName != null ) {
       String[] splitName = fileName.split( "/" );
       if ( splitName.length == 2 && PLUGIN_XML_FILENAME.equals( splitName[ 1 ] ) ) {
@@ -41,7 +42,8 @@ public abstract class PluginXmlFileHandler extends XmlPluginFileHandler {
       }
     }
     return false;
+    */
 
-    //return ( fileName != null && fileName.endsWith( "/" + PLUGIN_XML_FILENAME ) );
+    return ( fileName != null && fileName.endsWith( "/" + PLUGIN_XML_FILENAME ) );
   }
 }
