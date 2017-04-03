@@ -41,5 +41,7 @@ public abstract class PluginXmlFileHandler extends XmlPluginFileHandler {
       }
     }
     return false;
+
+    //return ( fileName != null && fileName.endsWith( "/" + PLUGIN_XML_FILENAME ) );
   }
 }

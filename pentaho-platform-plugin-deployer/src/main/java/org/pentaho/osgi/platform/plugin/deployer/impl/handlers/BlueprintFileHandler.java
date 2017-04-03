@@ -17,9 +17,12 @@ public class BlueprintFileHandler implements PluginFileHandler {
 
   public static final Pattern LIB_PATTERN = Pattern.compile( ".+\\/OSGI-INF\\/blueprint\\/.*\\.xml" );
   public static final String JAR = ".jar";
+  public static final String XML = ".xml";
+  public static final String OSGI_INF_BLUEPRINT = "OSGI-INF/blueprint/";
 
   @Override public boolean handles( String fileName ) {
-    return LIB_PATTERN.matcher( fileName ).matches();
+    //return LIB_PATTERN.matcher( fileName ).matches();
+    return fileName != null && fileName.contains( OSGI_INF_BLUEPRINT ) && fileName.endsWith( XML );
   }
 
   @Override public void handle( String relativePath, File file, PluginMetadata pluginMetadata )

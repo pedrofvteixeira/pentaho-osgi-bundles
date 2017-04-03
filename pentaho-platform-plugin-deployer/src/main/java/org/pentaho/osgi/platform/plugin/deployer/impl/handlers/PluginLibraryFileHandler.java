@@ -45,10 +45,12 @@ public class PluginLibraryFileHandler implements PluginFileHandler {
   private static Logger log = LoggerFactory.getLogger( PluginLibraryFileHandler.class );
 
   public static final Pattern LIB_PATTERN = Pattern.compile( ".+\\/lib\\/.+\\.jar"  );
+  public static final String LIB = "/lib/";
   public static final String JAR = ".jar";
 
   @Override public boolean handles( String fileName ) {
-    return LIB_PATTERN.matcher( fileName ).matches();
+    //return LIB_PATTERN.matcher( fileName ).matches();
+    return fileName != null && fileName.contains( LIB ) && fileName.endsWith( JAR );
   }
 
   @Override public void handle( String relativePath, File file, PluginMetadata pluginMetadata )

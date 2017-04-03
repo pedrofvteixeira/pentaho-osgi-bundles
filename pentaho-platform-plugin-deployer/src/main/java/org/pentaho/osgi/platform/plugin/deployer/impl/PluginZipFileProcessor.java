@@ -58,15 +58,18 @@ public class PluginZipFileProcessor {
   public static final String BLUEPRINT = "OSGI-INF/blueprint/blueprint.xml";
   public static final String BLUEPRINT_REGEX = ".*\\/OSGI-INF\\/blueprint\\/.*\\.xml";
   public static final String MANIFEST_REGEX = ".*\\/META-INF\\/MANIFEST.MF";
+  public static final String MANIFEST_MF = "MANIFEST.MF";
+  public static final String OSGI_INF_BLUEPRINT = "OSGI-INF/blueprint/";
 
-  private final List<PluginFileHandler> pluginFileHandlers;
+  private final PluginFileHandler[] pluginFileHandlers;
   private final String name;
   private final String symbolicName;
   private final String version;
 
   public PluginZipFileProcessor( List<PluginFileHandler> pluginFileHandlers, String name, String symbolicName,
                                  String version ) {
-    this.pluginFileHandlers = pluginFileHandlers;
+    this.pluginFileHandlers = pluginFileHandlers != null ?
+            pluginFileHandlers.toArray( new PluginFileHandler[]{} ) : new PluginFileHandler[]{};
     this.name = name;
     this.symbolicName = symbolicName;
     this.version = version;
@@ -110,10 +113,10 @@ public class PluginZipFileProcessor {
         byte[] zipBytes = byteArrayOutputStream.toByteArray();
         String name = zipEntry.getName();
         boolean shouldOutput = true;
-        if ( name.matches( MANIFEST_REGEX ) ) {
+        if ( name.endsWith( MANIFEST_MF ) ) {
           shouldOutput = false;
           manifest = new Manifest( new ByteArrayInputStream( zipBytes ) );
-        } else if ( name.matches( BLUEPRINT_REGEX ) ) {
+        } else if ( name.contains( OSGI_INF_BLUEPRINT ) && !name.endsWith( OSGI_INF_BLUEPRINT ) ) {
           shouldOutput = false;
           try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -181,12 +184,11 @@ public class PluginZipFileProcessor {
           String currentPath = sb.toString();
 
           //System.err.println( "================> CURRENT PATH : " + currentPath );
-
-          for ( PluginFileHandler pluginFileHandler : pluginFileHandlers ) {
-            if ( pluginFileHandler.handles( currentPath ) ) {
+          for ( int i = 0; i < pluginFileHandlers.length; i++ ) {
+            if ( pluginFileHandlers[i].handles( currentPath ) ) {
               try {
                 // There is no short-circuit. Multiple handlers can do work on any given resource
-                pluginFileHandler.handle( currentPath, currentFile, pluginMetadata );
+                pluginFileHandlers[i].handle( currentPath, currentFile, pluginMetadata );
               } catch ( PluginHandlingException e ) {
                 throw new IOException( e );
               }
@@ -195,52 +197,20 @@ public class PluginZipFileProcessor {
 
           if ( currentFile.isDirectory() ) {
 
-            File[] dirFiles = currentFile.listFiles(); // original
-
-            /*
-
             File[] dirFiles = currentFile.listFiles( new FileFilter() {
-
-              final List<String> BLACKLIST = Arrays.asList( new String[]{ ".js", ".css", ".png", ".svg" } );
 
               @Override
               public boolean accept( File f ) {
 
-
                 if ( f == null ) {
                   return false;
+
                 } else if ( f.isDirectory() ) {
                   return true;
-                } else {
-                  int idx = f.getName().lastIndexOf ("." );
-                  String extension = idx < 0 ? "" : f.getName().toLowerCase().substring( idx );
-                  return !BLACKLIST.contains( extension );
-                }
-              }
-            } );
-
-            */
-
-
-
-            /*
-            File[] dirFiles = currentFile.listFiles( new FileFilter() {
-
-              final List<String> BLACKLIST = Arrays.asList( new String[]{ ".js", ".css", ".png", ".svg" } );
-
-              @Override
-              public boolean accept( File f ) {
-
-
-                if ( f == null ) {
-                  return false;
-
-                } else if ( f.isDirectory() || PLUGIN_XML_FILENAME.equals( f.getName() ) ) {
-                  return true; // need to keep these, otherwise the existing logic won't work as intended
 
                 } else {
-                  for ( PluginFileHandler pluginFileHandler : pluginFileHandlers ) {
-                    if ( pluginFileHandler.handles( f.getAbsolutePath().replace( dir.getAbsolutePath(), "" ) ) ) {
+                  for ( int i = 0; i < pluginFileHandlers.length; i++ ) {
+                    if ( pluginFileHandlers[i].handles( f.getAbsolutePath().replace( dir.getAbsolutePath(), "" ) ) ) {
                       return true; // we just need one
                     }
                   }
@@ -248,8 +218,6 @@ public class PluginZipFileProcessor {
                 return false;
               }
             } );
-            */
-
 
             File pluginXmlFile = null;
             for ( File file : dirFiles ) {
