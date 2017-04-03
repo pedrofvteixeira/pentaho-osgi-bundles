@@ -34,13 +34,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -157,6 +155,10 @@ public class PluginZipFileProcessor {
       }
 
       if ( pluginFileHandlers != null ) {
+
+        long startTimeMillis = System.currentTimeMillis();
+        System.err.println( "========> START : Plugin File Handling for content inside " + dir );
+
         Stack<File> fileStack = new Stack<File>();
         fileStack.push( dir );
         while ( fileStack.size() > 0 ) {
@@ -177,6 +179,9 @@ public class PluginZipFileProcessor {
             sb.setLength( sb.length() - 1 );
           }
           String currentPath = sb.toString();
+
+          //System.err.println( "================> CURRENT PATH : " + currentPath );
+
           for ( PluginFileHandler pluginFileHandler : pluginFileHandlers ) {
             if ( pluginFileHandler.handles( currentPath ) ) {
               try {
@@ -189,7 +194,63 @@ public class PluginZipFileProcessor {
           }
 
           if ( currentFile.isDirectory() ) {
-            File[] dirFiles = currentFile.listFiles();
+
+            File[] dirFiles = currentFile.listFiles(); // original
+
+            /*
+
+            File[] dirFiles = currentFile.listFiles( new FileFilter() {
+
+              final List<String> BLACKLIST = Arrays.asList( new String[]{ ".js", ".css", ".png", ".svg" } );
+
+              @Override
+              public boolean accept( File f ) {
+
+
+                if ( f == null ) {
+                  return false;
+                } else if ( f.isDirectory() ) {
+                  return true;
+                } else {
+                  int idx = f.getName().lastIndexOf ("." );
+                  String extension = idx < 0 ? "" : f.getName().toLowerCase().substring( idx );
+                  return !BLACKLIST.contains( extension );
+                }
+              }
+            } );
+
+            */
+
+
+
+            /*
+            File[] dirFiles = currentFile.listFiles( new FileFilter() {
+
+              final List<String> BLACKLIST = Arrays.asList( new String[]{ ".js", ".css", ".png", ".svg" } );
+
+              @Override
+              public boolean accept( File f ) {
+
+
+                if ( f == null ) {
+                  return false;
+
+                } else if ( f.isDirectory() || PLUGIN_XML_FILENAME.equals( f.getName() ) ) {
+                  return true; // need to keep these, otherwise the existing logic won't work as intended
+
+                } else {
+                  for ( PluginFileHandler pluginFileHandler : pluginFileHandlers ) {
+                    if ( pluginFileHandler.handles( f.getAbsolutePath().replace( dir.getAbsolutePath(), "" ) ) ) {
+                      return true; // we just need one
+                    }
+                  }
+                }
+                return false;
+              }
+            } );
+            */
+
+
             File pluginXmlFile = null;
             for ( File file : dirFiles ) {
               if ( PLUGIN_XML_FILENAME.equals( file.getName() ) ) {
@@ -207,6 +268,9 @@ public class PluginZipFileProcessor {
             }
           }
         }
+
+        System.err.println( "================> ELAPSED TIME: " + ( System.currentTimeMillis() - startTimeMillis ) + " millis" );
+        System.err.println( "========> FINISH: Plugin File Handling for content inside " + dir );
       }
 
       int tries = 100;
