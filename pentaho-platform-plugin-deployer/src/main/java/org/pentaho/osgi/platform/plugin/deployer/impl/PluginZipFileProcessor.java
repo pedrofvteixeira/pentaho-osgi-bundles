@@ -28,6 +28,9 @@ import org.pentaho.osgi.platform.plugin.deployer.api.PluginHandlingException;
 import org.pentaho.osgi.platform.plugin.deployer.api.PluginMetadata;
 import org.w3c.dom.Document;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -71,6 +74,8 @@ public class PluginZipFileProcessor {
 
   private boolean isPluginProcessedBefore;
 
+  private Logger logger = LoggerFactory.getLogger( getClass() );
+
   public PluginZipFileProcessor( List<PluginFileHandler> pluginFileHandlers, boolean isPluginProcessedBefore, String name, String symbolicName,
                                  String version ) {
     this.pluginFileHandlers = pluginFileHandlers;
@@ -87,6 +92,10 @@ public class PluginZipFileProcessor {
                                          final ExceptionSettable<IOException> exceptionSettable ) {
     return executorService.submit( new Callable<Void>() {
       @Override public Void call() throws Exception {
+
+        long elapsedTime = System.currentTimeMillis();
+        logger.error( "Start processing zip plugin '" + name + "'" );
+
         try {
           if ( isPluginProcessedBefore ) {
             processManifest( zipInputStream, zipOutputStream );
@@ -96,6 +105,8 @@ public class PluginZipFileProcessor {
         } catch ( IOException e ) {
           exceptionSettable.setException( e );
         }
+        logger.error( "Finished processing zip plugin'" + name + "'" );
+        logger.error( "Elapsed time in millis:" + ( System.currentTimeMillis() - elapsedTime ) );
         return null;
       }
     } );
